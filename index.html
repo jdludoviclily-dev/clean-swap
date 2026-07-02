@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- Vercel Web Analytics: privacy-friendly visitor + return tracking (live once deployed on Vercel) -->
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <style>
   :root{
     --forest:#1B5E3F;
@@ -367,6 +370,12 @@
   document.querySelectorAll('.brand-logo,.head-logo,.foot-logo').forEach(im => { im.src = LOGO_SRC; });
 
   const fileInput = document.getElementById('file');
+  function track(name, data){ try { if (window.va) window.va('event', { name: name, data: data || {} }); } catch(e){} }
+  document.addEventListener('click', function(e){
+    const a = e.target.closest ? e.target.closest('a.pill-btn') : null;
+    if (a) track(a.classList.contains('buy') ? 'buy_click' : 'diy_click');
+  });
+
   const drop = document.getElementById('drop');
   const preview = document.getElementById('preview');
   const previewImg = document.getElementById('previewImg');
@@ -559,6 +568,7 @@ List at most 7 ingredients, at most 4 benefits, and at most 4 supports. Keep eve
       return;
     }
     lastResult = d;
+    track('label_scan', { has_ingredients: (d.ingredients || []).length > 0 });
     document.getElementById('productName').textContent = d.product_guess || 'Product';
 
     const tip = document.getElementById('photoTip');
@@ -777,6 +787,7 @@ Output ONLY valid JSON, no markdown, no backticks:
         return;
       }
       chatHistory.push({ role:'assistant', content:d.reply });
+      track('sophie_message', { has_swap: !!d.swap });
 
       let acts = '';
       if (d.swap && d.buy_search){
@@ -957,6 +968,7 @@ Output ONLY valid JSON, no markdown, no backticks:
     try{
       const blob = await makeShareCard(lastResult);
       await shareImage(blob);
+      track('share', { from: 'scan' });
     }catch(err){
       if (!(err && err.name === 'AbortError')) toast("Couldn't share that — try again.");
     }finally{
@@ -971,6 +983,7 @@ Output ONLY valid JSON, no markdown, no backticks:
     try{
       const blob = await makeSophieCard(question, reply, swap);
       await shareImage(blob);
+      track('share', { from: 'sophie' });
     }catch(err){
       if (!(err && err.name === 'AbortError')) toast("Couldn't share that — try again.");
     }finally{
